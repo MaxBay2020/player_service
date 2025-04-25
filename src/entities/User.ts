@@ -1,4 +1,4 @@
-import {Entity, Column, ManyToOne, OneToMany} from "typeorm"
+import {Entity, Column, ManyToOne, OneToMany, ManyToMany, JoinTable} from "typeorm"
 import {IsEmail, IsNumber, IsString, Max, Min} from "class-validator";
 import Statistic from "./Statistic";
 import UserRole from "./UserRole";
@@ -21,6 +21,7 @@ class User extends Statistic{
     age: number
 
     @Column({
+        nullable: true,
         unique: true
     })
     @IsString()
@@ -28,7 +29,7 @@ class User extends Statistic{
     email: string
 
     @Column({
-        nullable: false
+        nullable: true
     })
     @IsString()
     password: string
@@ -36,14 +37,16 @@ class User extends Statistic{
     @ManyToOne(() => UserRole, userRole => userRole.users)
     userRole: UserRole
 
-    @ManyToOne(() => User, user => user.players)
-    manager: User
+    @ManyToMany(() => User, user => user.players)
+    @JoinTable()
+    managers: User[]
 
-    @OneToMany(() => User, user => user.manager)
+    @ManyToMany(() => User, user => user.managers)
     players: User[]
 
-    @ManyToOne(() => Team, team => team.user)
-    team: Team
+    @ManyToMany(() => Team, team => team.users)
+    @JoinTable()
+    teams: Team[]
 
 }
 

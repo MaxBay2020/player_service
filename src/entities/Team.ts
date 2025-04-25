@@ -1,4 +1,4 @@
-import {Entity, Column, OneToMany} from "typeorm"
+import {Entity, Column, OneToMany, ManyToMany} from "typeorm"
 import {IsString} from "class-validator";
 import Statistic from "./Statistic";
 import User from "./User";
@@ -11,20 +11,8 @@ class Team extends Statistic{
     @IsString()
     name: string
 
-    @Column()
-    @IsString()
-    battingStatistics: string
-
-    @Column()
-    @IsString()
-    fieldingStatistics: string
-
-    @Column()
-    @IsString()
-    pitchingStatistics: string
-
-    @OneToMany(() => User, user => user.team)
-    user: User[]
+    @ManyToMany(() => User, user => user.teams)
+    users: User[]
 
 }
 

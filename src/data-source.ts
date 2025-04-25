@@ -7,8 +7,8 @@ dotenv.config()
 
 const isProduction = process.env.NODE_ENV === 'PRODUCTION'
 const entitiesPath = isProduction ? "build/entities/*.js" : "src/entities/*.ts"
-const seedsPath = isProduction ? "build/db/seeds/*.js" : "src/db/seeds/*.ts"
-const factoriesPath = isProduction ? "build/db/factories/*.js" : "src/db/factories/*.ts"
+const seedsPath = isProduction ? "build/database/seeds/*.js" : "src/database/seeds/*.ts"
+const factoriesPath = isProduction ? "build/database/factories/*.js" : "src/database/factories/*.ts"
 
 const dataSourceConfig: DataSourceOptions & SeederOptions = {
     type: "mysql",
