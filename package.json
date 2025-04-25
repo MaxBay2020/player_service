@@ -26,11 +26,14 @@
       "jsonwebtoken": "^9.0.2",
       "mysql2": "^3.14.0",
       "reflect-metadata": "^0.2.2",
-      "typeorm": "0.3.22"
+      "typeorm": "0.3.22",
+      "typeorm-extension": "^3.7.1"
    },
    "scripts": {
       "dev": "ts-node-dev --inspect --  ./src/index.ts",
-      "start": "ts-node src/index.ts",
-      "typeorm": "typeorm-ts-node-commonjs"
+      "start": "ts-node ./build/index.js",
+      "build": "tsc -p .",
+      "schema:sync": "ts-node ./node_modules/typeorm/cli.js schema:sync -d src/data-source.ts",
+      "seed": "ts-node ./node_modules/typeorm-extension/dist/cli/index.js seed"
    }
 }
