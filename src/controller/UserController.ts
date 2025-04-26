@@ -1,6 +1,6 @@
 import AppDataSource from "../data-source"
 import {Request, Response} from "express"
-import QueryAllPlayersDTO from "../../DTO/User/QueryAllPlayersDTO";
+import QueryAllPlayersDTO from "../DTO/User/QueryAllPlayersDTO";
 import {plainToInstance} from "class-transformer"
 import {validate} from "class-validator";
 import User from "../entities/User";
