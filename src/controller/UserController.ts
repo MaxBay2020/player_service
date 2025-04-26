@@ -1,9 +1,10 @@
 import AppDataSource from "../data-source"
-import { Request, Response } from "express"
+import {Request, Response} from "express"
 import QueryAllPlayersDTO from "../../DTO/User/QueryAllPlayersDTO";
 import {plainToInstance} from "class-transformer"
 import {validate} from "class-validator";
 import User from "../entities/User";
+import Log, {Message, StatusCode} from "../utils/enums";
 
 class UserController {
 
@@ -21,15 +22,12 @@ class UserController {
 
         // if not pass validation of DTO
         if (errors.length > 0) {
-            // const error = new Error<null>(null, StatusCode.E400, Message.ErrParams)
-            // res.status(error.statusCode).send({
-            //     info: error.info,
-            //     message: error.message
-            // })
-
-            res.status(400).send({
-                message: `query wrong isAdmin: ${req.query.isAdmin}`
+            const log = new Log<null>(null, StatusCode.E400, Message.ErrParams)
+            res.status(log.statusCode).send({
+                data: log.data,
+                message: log.message
             })
+
             return
         }
 
@@ -42,27 +40,36 @@ class UserController {
             fieldsSelected.push('user.lastName')
         }
 
-        const [playserList, count]: [User[], number] = await Promise.all([
-            AppDataSource.getRepository(User)
-                .createQueryBuilder('user')
-                .select([
-                    ...fieldsSelected,
-                    'user.age'
-                ])
-                .getMany(),
-            AppDataSource.getRepository(User)
-                .createQueryBuilder('user')
-                .getCount(),
-        ])
+        try{
+            const [playerList, count]: [User[], number] = await Promise.all([
+                AppDataSource.getRepository(User)
+                    .createQueryBuilder('user')
+                    .select([
+                        ...fieldsSelected,
+                        'user.age'
+                    ])
+                    .getMany(),
+                AppDataSource.getRepository(User)
+                    .createQueryBuilder('user')
+                    .getCount(),
+            ])
 
 
-        res.status(200).send({
-            data: {
-                playserList,
-                count
-            }
-        })
-        return
+            const log = new Log<{}>({ playerList, count }, StatusCode.E200, Message.OK)
+            res.status(log.statusCode).send({
+                data: log.data,
+                message: log.message
+            })
+            return
+        }catch (e) {
+            console.log(e.message)
+            const log = new Log<{}>(e, StatusCode.E500, Message.ServerError)
+            res.status(log.statusCode).send({
+                data: log.data,
+                message: log.message
+            })
+            return
+        }
     }
 
     /***
@@ -84,15 +91,12 @@ class UserController {
 
         // if not pass validation of DTO
         if (errors.length > 0) {
-            // const error = new Error<null>(null, StatusCode.E400, Message.ErrParams)
-            // res.status(error.statusCode).send({
-            //     info: error.info,
-            //     message: error.message
-            // })
-
-            res.status(400).send({
-                message: `query wrong isAdmin: ${req.query.isAdmin}`
+            const log = new Log<null>(null, StatusCode.E400, Message.ErrParams)
+            res.status(log.statusCode).send({
+                data: log.data,
+                message: log.message
             })
+
             return
         }
 
@@ -105,7 +109,8 @@ class UserController {
             fieldsSelected.push('user.lastName')
         }
 
-        const player = await AppDataSource.getRepository(User)
+        try{
+            const player = await AppDataSource.getRepository(User)
                 .createQueryBuilder('user')
                 .select([
                     ...fieldsSelected,
@@ -115,12 +120,21 @@ class UserController {
                 .getOne()
 
 
-        res.status(200).send({
-            data: {
-                player
-            }
-        })
-        return
+            const log = new Log<{}>({ player }, StatusCode.E200, Message.OK)
+            res.status(log.statusCode).send({
+                data: log.data,
+                message: log.message
+            })
+            return
+        }catch (e){
+            console.log(e.message)
+            const log = new Log<{}>(e, StatusCode.E500, Message.ServerError)
+            res.status(log.statusCode).send({
+                data: log.data,
+                message: log.message
+            })
+            return
+        }
     }
 
 }
