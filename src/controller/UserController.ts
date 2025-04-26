@@ -1,53 +1,128 @@
-import { AppDataSource } from "../data-source"
-import { NextFunction, Request, Response } from "express"
-import { User } from "../entities/User"
+import AppDataSource from "../data-source"
+import { Request, Response } from "express"
+import QueryAllPlayersDTO from "../../DTO/User/QueryAllPlayersDTO";
+import {plainToInstance} from "class-transformer"
+import {validate} from "class-validator";
+import User from "../entities/User";
 
-export class UserController {
+class UserController {
 
-    private userRepository = AppDataSource.getRepository(User)
+    /***
+     * query all players based on isAdmin in query
+     * @param req
+     * @param res
+     */
+    static queryAllPlayers = async (req: Request, res: Response): Promise<void> => {
 
-    async all(request: Request, response: Response, next: NextFunction) {
-        return this.userRepository.find()
-    }
+        // DTO validation
+        const queryAllPlayersDTO = plainToInstance(QueryAllPlayersDTO, req.query)
 
-    async one(request: Request, response: Response, next: NextFunction) {
-        const id = parseInt(request.params.id)
+        const errors = await validate(queryAllPlayersDTO)
 
+        // if not pass validation of DTO
+        if (errors.length > 0) {
+            // const error = new Error<null>(null, StatusCode.E400, Message.ErrParams)
+            // res.status(error.statusCode).send({
+            //     info: error.info,
+            //     message: error.message
+            // })
 
-        const user = await this.userRepository.findOne({
-            where: { id }
-        })
-
-        if (!user) {
-            return "unregistered user"
-        }
-        return user
-    }
-
-    async save(request: Request, response: Response, next: NextFunction) {
-        const { firstName, lastName, age } = request.body;
-
-        const user = Object.assign(new User(), {
-            firstName,
-            lastName,
-            age
-        })
-
-        return this.userRepository.save(user)
-    }
-
-    async remove(request: Request, response: Response, next: NextFunction) {
-        const id = parseInt(request.params.id)
-
-        let userToRemove = await this.userRepository.findOneBy({ id })
-
-        if (!userToRemove) {
-            return "this user not exist"
+            res.status(400).send({
+                message: `query wrong isAdmin: ${req.query.isAdmin}`
+            })
+            return
         }
 
-        await this.userRepository.remove(userToRemove)
+        const { isAdmin } = queryAllPlayersDTO
 
-        return "user has been removed"
+
+        const fieldsSelected = ['user.firstName']
+
+        if(isAdmin){
+            fieldsSelected.push('user.lastName')
+        }
+
+        const [playserList, count]: [User[], number] = await Promise.all([
+            AppDataSource.getRepository(User)
+                .createQueryBuilder('user')
+                .select([
+                    ...fieldsSelected,
+                    'user.age'
+                ])
+                .getMany(),
+            AppDataSource.getRepository(User)
+                .createQueryBuilder('user')
+                .getCount(),
+        ])
+
+
+        res.status(200).send({
+            data: {
+                playserList,
+                count
+            }
+        })
+        return
+    }
+
+    /***
+     * query player based on isAdmin in query
+     * @param req
+     * @param res
+     */
+    static queryPlayerByPlayerId = async (req: Request, res: Response): Promise<void> => {
+
+        const { playerId } = req.params
+
+        // DTO validation
+        const queryAllPlayersDTO = plainToInstance(QueryAllPlayersDTO, {
+            ...req.query,
+            playerId
+        })
+
+        const errors = await validate(queryAllPlayersDTO)
+
+        // if not pass validation of DTO
+        if (errors.length > 0) {
+            // const error = new Error<null>(null, StatusCode.E400, Message.ErrParams)
+            // res.status(error.statusCode).send({
+            //     info: error.info,
+            //     message: error.message
+            // })
+
+            res.status(400).send({
+                message: `query wrong isAdmin: ${req.query.isAdmin}`
+            })
+            return
+        }
+
+        const { isAdmin } = queryAllPlayersDTO
+
+
+        const fieldsSelected = ['user.firstName']
+
+        if(isAdmin){
+            fieldsSelected.push('user.lastName')
+        }
+
+        const player = await AppDataSource.getRepository(User)
+                .createQueryBuilder('user')
+                .select([
+                    ...fieldsSelected,
+                    'user.age'
+                ])
+                .where('user.id = :playerId', { playerId })
+                .getOne()
+
+
+        res.status(200).send({
+            data: {
+                player
+            }
+        })
+        return
     }
 
 }
+
+export default UserController

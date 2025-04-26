@@ -4,6 +4,7 @@ import AppDataSource from "./data-source";
 import cors from "cors";
 import dotenv from 'dotenv'
 import cookieParser from "cookie-parser";
+import indexRoute from "./routes/indexRoute";
 
 
 
@@ -21,10 +22,12 @@ app.use(cors({
     credentials: true,
 }))
 
+// routes
+app.use('/', indexRoute)
 
 
 // error handler
-app.use((err: Error, req: Request, res: Response, next: NextFunction) => {
+app.use((err: Error, req: Request, res: Response, _next: NextFunction) => {
     console.error(err);
     res.status(500).json({
         message: 'Internal Server Error',
