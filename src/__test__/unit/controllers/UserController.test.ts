@@ -177,7 +177,7 @@ describe('UserController - Unit Test', () => {
             })
         })
 
-        it('should select correct fields when isAdmin=true', async () => {
+        it('should return 200 with correct fields when isAdmin=true', async () => {
             req.params = { playerId: 'player-id-123' }
             req.query = { isAdmin: 'true' };
             (validate as jest.Mock).mockResolvedValue([])
@@ -203,7 +203,7 @@ describe('UserController - Unit Test', () => {
             expect(res.status).toHaveBeenCalledWith(StatusCode.E200)
         })
 
-        it('should select correct fields when isAdmin=false', async () => {
+        it('should return 200 with correct fields when isAdmin=false', async () => {
             req.params = { playerId: 'player-id-123' }
             req.query = { isAdmin: 'false' };
             (validate as jest.Mock).mockResolvedValue([])

@@ -10,3 +10,9 @@ This service manages player data, responding to client requests with varying lev
 1. Run `yarn` command to install dependencies.
 2. Setup database settings inside `data-source.ts` file
 3. Run `yarn dev` command
+
+
+# Steps to run this test:
+```shell
+    $ yarn test
+```
