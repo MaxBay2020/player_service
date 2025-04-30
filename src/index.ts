@@ -4,6 +4,7 @@ import AppDataSource from "./data-source";
 import cors from "cors";
 import dotenv from 'dotenv'
 import cookieParser from "cookie-parser";
+import indexRoute from "./routes/indexRoute";
 
 
 
@@ -17,14 +18,16 @@ app.use(bodyParser.urlencoded({ extended: false }))
 app.use(bodyParser.json())
 
 app.use(cors({
-    origin: '*',
+    origin: process.env.FRONTEND_ORIGIN,
     credentials: true,
 }))
 
+// routes
+app.use('/', indexRoute)
 
 
 // error handler
-app.use((err: Error, req: Request, res: Response, next: NextFunction) => {
+app.use((err: Error, req: Request, res: Response, _next: NextFunction) => {
     console.error(err);
     res.status(500).json({
         message: 'Internal Server Error',
@@ -45,7 +48,7 @@ const startServer = async () => {
 
     const port = Number(process.env.PORT) || 8000
     app.listen(port, () => {
-        console.log(`SERVER IS RUNNING at ${port}!`)
+        console.log(`SERVER IS RUNNING at http://localhost:${port}!`)
     })
 }
 

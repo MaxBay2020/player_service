@@ -1,53 +1,142 @@
-import { AppDataSource } from "../data-source"
-import { NextFunction, Request, Response } from "express"
-import { User } from "../entity/User"
+import AppDataSource from "../data-source"
+import {Request, Response} from "express"
+import QueryAllPlayersDTO from "../DTO/User/QueryAllPlayersDTO";
+import {plainToInstance} from "class-transformer"
+import {validate} from "class-validator";
+import User from "../entities/User";
+import Log, {Message, StatusCode} from "../utils/enums";
 
-export class UserController {
+class UserController {
 
-    private userRepository = AppDataSource.getRepository(User)
+    /***
+     * query all players based on isAdmin in query
+     * @param req
+     * @param res
+     */
+    static queryAllPlayers = async (req: Request, res: Response): Promise<void> => {
 
-    async all(request: Request, response: Response, next: NextFunction) {
-        return this.userRepository.find()
-    }
+        // DTO validation
+        const queryAllPlayersDTO = plainToInstance(QueryAllPlayersDTO, req.query)
 
-    async one(request: Request, response: Response, next: NextFunction) {
-        const id = parseInt(request.params.id)
+        const errors = await validate(queryAllPlayersDTO)
 
+        // if not pass validation of DTO
+        if (errors.length > 0) {
+            const log = new Log<null>(null, StatusCode.E400, Message.ErrParams)
+            res.status(log.statusCode).send({
+                data: log.data,
+                message: log.message
+            })
 
-        const user = await this.userRepository.findOne({
-            where: { id }
-        })
-
-        if (!user) {
-            return "unregistered user"
-        }
-        return user
-    }
-
-    async save(request: Request, response: Response, next: NextFunction) {
-        const { firstName, lastName, age } = request.body;
-
-        const user = Object.assign(new User(), {
-            firstName,
-            lastName,
-            age
-        })
-
-        return this.userRepository.save(user)
-    }
-
-    async remove(request: Request, response: Response, next: NextFunction) {
-        const id = parseInt(request.params.id)
-
-        let userToRemove = await this.userRepository.findOneBy({ id })
-
-        if (!userToRemove) {
-            return "this user not exist"
+            return
         }
 
-        await this.userRepository.remove(userToRemove)
+        const { isAdmin } = queryAllPlayersDTO
 
-        return "user has been removed"
+
+        const fieldsSelected = ['user.firstName']
+
+        if(isAdmin){
+            fieldsSelected.push('user.lastName')
+        }
+
+        try{
+            const [playerList, count]: [User[], number] = await Promise.all([
+                AppDataSource.getRepository(User)
+                    .createQueryBuilder('user')
+                    .select([
+                        ...fieldsSelected,
+                        'user.age'
+                    ])
+                    .getMany(),
+                AppDataSource.getRepository(User)
+                    .createQueryBuilder('user')
+                    .getCount(),
+            ])
+
+
+            const log = new Log<{}>({ playerList, count }, StatusCode.E200, Message.OK)
+            res.status(log.statusCode).send({
+                data: log.data,
+                message: log.message
+            })
+            return
+        }catch (e) {
+            console.log(e.message)
+            const log = new Log<{}>(e, StatusCode.E500, Message.ServerError)
+            res.status(log.statusCode).send({
+                data: log.data,
+                message: log.message
+            })
+            return
+        }
+    }
+
+    /***
+     * query player based on isAdmin in query
+     * @param req
+     * @param res
+     */
+    static queryPlayerByPlayerId = async (req: Request, res: Response): Promise<void> => {
+
+        const { playerId } = req.params
+
+        // DTO validation
+        const queryAllPlayersDTO = plainToInstance(QueryAllPlayersDTO, {
+            ...req.query,
+            playerId
+        })
+
+        const errors = await validate(queryAllPlayersDTO)
+
+        // if not pass validation of DTO
+        if (errors.length > 0) {
+            const log = new Log<null>(null, StatusCode.E400, Message.ErrParams)
+            res.status(log.statusCode).send({
+                data: log.data,
+                message: log.message
+            })
+
+            return
+        }
+
+        const { isAdmin } = queryAllPlayersDTO
+
+
+        const fieldsSelected = ['user.firstName']
+
+        if(isAdmin){
+            fieldsSelected.push('user.lastName')
+        }
+
+        try{
+            const player = await AppDataSource.getRepository(User)
+                .createQueryBuilder('user')
+                .select([
+                    ...fieldsSelected,
+                    'user.age'
+                ])
+                .where('user.id = :playerId', { playerId })
+                .getOne()
+
+
+            const log = new Log<{}>({ player }, StatusCode.E200, Message.OK)
+            res.status(log.statusCode).send({
+                data: log.data,
+                message: log.message
+            })
+            return
+        }catch (e){
+            console.log(e.message)
+            const log = new Log<{}>(e, StatusCode.E500, Message.ServerError)
+            res.status(log.statusCode).send({
+                data: log.data,
+                message: log.message
+            })
+            return
+        }
     }
 
 }
+
+export default UserController
